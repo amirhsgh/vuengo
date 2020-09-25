@@ -5,7 +5,7 @@
       <router-link to="/about">About</router-link>
     </div>
     <router-view/>
-    <button class="button is-primary">primary</button>
+    <button class="button is-primary">primar</button>
   </div>
 </template>
 
