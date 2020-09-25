@@ -4,13 +4,13 @@
     <hr>
     <div class="columns">
       <div class="column is-3 is-offset-3">
-        <form>
+        <form v-on:submit.prevent="addTask">
           <h2 class="subtitle">Add task</h2>
 
           <div class="field">
             <label class="label">Description</label>
             <div class="control">
-              <input class="input" type="text">
+              <input class="input" type="text" v-model="description">
             </div>
           </div>
 
@@ -18,7 +18,7 @@
             <label class="label">Status</label>
             <div class="control">
               <div class="select">
-                <select>
+                <select v-model="status">
                   <option value="todo">To dO</option>
                   <option value="done">Done</option>
                 </select>
@@ -40,10 +40,10 @@
       <div class="column is-6">
         <h2 class="subtitle">To do</h2>
         <div class="todo">
-          <div class="card" v-for="task in tasks" v-bind:key="task.id">
+          <div class="card" v-for="task in tasks" v-if="task.status ==='todo'" v-bind:key="task.id">
             <div class="card-content">{{task.description}}</div>
             <footer class="card-footer">
-              <a class="card-footer-item">Done</a>
+              <a class="card-footer-item" @click="setStatus(task.id,'done')">Done</a>
             </footer>
           </div>
         </div>
@@ -53,9 +53,12 @@
       </div>
             <div class="column is-6">
         <h2 class="subtitle">Done</h2>
-        <div class="todo">
-          <div class="card" v-for="task in tasks" v-bind:key="task.id">
+        <div class="done">
+          <div class="card" v-for="task in tasks" v-if="task.status ==='done'" v-bind:key="task.id">
             <div class="card-content">{{task.description}}</div>
+            <footer class="card-footer">
+              <a class="card-footer-item" @click="setStatus(task.id,'todo')">To do</a>
+            </footer>
           </div>
 
         </div>
@@ -72,7 +75,9 @@ export default {
   name: 'Home',
   data() {
     return {
-      tasks:[]
+      tasks:[],
+      description:'',
+      status:'todo'
     }
   },
   mounted (){
@@ -82,13 +87,63 @@ export default {
     getTasks(){
       axios({
         method:'get',
-        url:'localhost:8000/tasks',
+        url:'http://localhost:8000/tasks/',
         auth:{
           username: 'amqa',
           password: '13766731'
         }
       }).then(response => this.tasks = response.data)
-    }
+    },
+    addTask(){
+      if (this.description){
+        axios({
+          method:'POST',
+          url:'http://localhost:8000/tasks/',
+          data:{
+            description:this.description,
+            status:this.status
+          },
+          auth:{
+            username:'amqa',
+            password:'13766731'
+          }
+        }).then((response) =>{
+          let newTask = {
+            'id':response.data.id,
+            'description':this.description,
+            'status':this.status
+          }
+
+          this.tasks.push(newTask)
+
+          this.description= ''
+          this.status= 'todo'
+        }).catch((error)=>{
+          console.log(error)
+        })
+      }
+    },
+    setStatus(task_id,status){
+      const task = this.tasks.filter(task=> task.id===task_id)[0]
+      const description = task.description
+        axios({
+          method:'PUT',
+          url:'http://localhost:8000/tasks/' + task_id + '/',
+          headers:{
+            'Content-Type':'application/json',
+          },
+          data:{
+            status:status,
+            description:description
+          },
+          auth:{
+            username:'amqa',
+            password:'13766731'
+          }
+        }).then(()=>{
+          task.status = status
+        })
+      }  
   }
 }
 </script>
